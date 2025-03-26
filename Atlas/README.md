@@ -61,4 +61,4 @@ Cette configuration Docker Compose met en place deux services, `pg_tileserv` et 
 ## Personnalisation
 
 - Si vous avez besoin de personnaliser les configurations pour `pg_tileserv` ou `pg_featureserv`, vous pouvez décommenter les mappages de volumes respectifs et fournir vos fichiers de configuration.
-- Pour le serveur Nginx dans `server-web`, vous pouvez placer votre contenu web à l'intérieur du répertoire `./app/` sur la machine hôte.
+- Pour le serveur Nginx dans `server-web`, vous pouvez placer votre contenu web à l'intérieur du répertoire `./app/` sur la machine hôte.jjjjj
