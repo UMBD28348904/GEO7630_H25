@@ -20,9 +20,9 @@ services:
   server-web:
     image: nginx
     ports:
-      - 8000:80
+      - 80:80
     volumes:
-      - ./app/:/usr/share/nginx/html
+      - ./app:/usr/share/nginx/html
     restart: always
   # geoserver:
   #   image: kartoza/geoserver:2.22.2

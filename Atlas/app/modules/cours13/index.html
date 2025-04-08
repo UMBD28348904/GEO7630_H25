@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Deck.gl + Google 3D Tiles</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #map { width: 100%; height: 100%; }
+    #credits {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      color: white;
+      font-size: 10px;
+      background: rgba(0,0,0,0.4);
+      padding: 4px 8px;
+      z-index: 1000;
+    }
+  </style>
+  <!-- deck.gl & d3 -->
+  <script src="https://cdn.jsdelivr.net/npm/deck.gl@9.1.8/dist.min.js"></script>
+  <script src="https://unpkg.com/d3-scale@3.3.0/dist/d3-scale.min.js"></script>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="credits"></div>
+
+  <script>
+    const GOOGLE_API_KEY = 'AIzaSyDLeVgNQmcuF-uCbr9UfZE6MkYsA95BZ2g'; // <-- remplace ici
+    const TILESET_URL = 'https://tile.googleapis.com/v1/3dtiles/root.json';
+    const BUILDING_DATA = 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/google-3d-tiles/buildings.geojson';
+    const occupCom = 'https://donnees.montreal.ca/dataset/dbdfbdba-0725-470d-a23e-da69dbedc4e6/resource/6bffa78e-e717-4cc8-95a4-7d2329789384/download/ilots-de-chaleur-images-satellite-2020.geojson'
+
+    const INITIAL_VIEW_STATE = {
+      latitude: 45.559,
+      longitude: -73.55,
+      zoom: 16,
+      bearing: 90,
+      pitch: 60,
+    };
+
+  const colorScale = d3.scaleThreshold()
+  .domain([0, 1, 2, 3, 5])
+  .range([
+    [254, 235, 226],
+    [251, 180, 185],
+    [247, 104, 161],
+    [197, 27, 138],
+    [122, 1, 119],
+    [73, 0, 73] // fallback for >5
+  ]);
+
+  console.log(colorScale)
+
+    let credits = '';
+
+    const deckgl = new deck.DeckGL({
+      container: 'map',
+      initialViewState: INITIAL_VIEW_STATE,
+      controller: true,
+      getTooltip: ({object}) => object && object.properties && {
+        html: `<b>Distance to nearest tree:</b> ${object.properties.FID}`
+      },
+      onLoad: () => console.log("DeckGL loaded"),
+      layers: [
+        new deck.Tile3DLayer({
+          id: 'google-3d-tiles',
+          data: `${TILESET_URL}?key=${GOOGLE_API_KEY}`,
+          onTilesetLoad: tileset3d => {
+            tileset3d.options.onTraversalComplete = selectedTiles => {
+              const uniqueCredits = new Set();
+              selectedTiles.forEach(tile => {
+                const c = tile.content.gltf.asset.copyright;
+                if (c) c.split(';').forEach(str => uniqueCredits.add(str.trim()));
+              });
+              credits = [...uniqueCredits].join('; ');
+              document.getElementById('credits').innerText = credits;
+              return selectedTiles;
+            };
+          },
+          operation: 'terrain+draw'
+        }),
+
+        new deck.GeoJsonLayer({
+          id: 'buildings',
+          data: occupCom,
+          extensions: [
+            new deck.DataFilterExtension({filterSize: 1}),
+            new deck._TerrainExtension()
+          ],
+          getFillColor: d => {
+            const v = d.properties.FID;
+            if (v >= 5) return [73, 0, 73];
+            if (v >= 3) return [122, 1, 119];
+            if (v >= 2) return [197, 27, 138];
+            if (v >= 1) return [247, 104, 161];
+            if (v >= 0) return [251, 180, 185];
+            return [254, 235, 226]; // fallback
+          },
+          getFilterValue: f => f.properties.FID,
+          filled: true,
+          opacity: 0.2
+        })
+      ]
+    });
+
+
+  </script>
+</body>
+</html>
